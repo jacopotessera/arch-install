@@ -1,0 +1,8 @@
+#!/bin/fish
+
+set -gx ARCH_INSTALL_CONFIGURATION (basename (status -f))
+set -gx ARCH_INSTALL_DISK DISK
+set -gx ARCH_INSTALL_P P
+set -gx ARCH_INSTALL_HOSTNAME HOSTNAME
+set -gx ARCH_INSTALL_USER USER
+
