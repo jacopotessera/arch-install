@@ -54,6 +54,8 @@ partition: cfg
 chroot:
 	cp makefile /mnt/makefile
 	cp configure.sh /mnt/configure.sh
+	mkdir -p /mnt/var/lib/iwd
+	cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
 	arch-chroot /mnt source /configure.sh && make -f /makefile cfg
 
 all: cfg datetime locale user autologin grub system fstab libvirt sway app
@@ -105,7 +107,9 @@ system: cfg
 	echo $(HOSTNAME) > /etc/hostname
 	mkinitcpio -P
 	echo "root:root" | chpasswd
+	$(PACMAN) openssh iwd
 	systemctl enable sshd
+	systemctl enable iwd
 
 fstab: cfg
 	mkdir -p /mnt/evo-pro
@@ -116,7 +120,7 @@ libvirt: cfg
 	$(PACMAN) qemu libvirt firewalld virt-manager polkit edk2-ovmf dnsmasq
 	usermod -a -G libvirt,kvm $(USER)
 	systemctl enable libvirtd firewalld
-	virsh net-autostart default
+	#virsh net-autostart default
 	#sudo virsh net-list --all
 	#sudo vi /etc/mkinitcpio.conf
 	#sudo vi /etc/modprobe.d/vfio.conf
@@ -127,8 +131,8 @@ libvirt: cfg
 
 sway: cfg
 	pacman -S --noconfirm sway i3status-rust bemenu
-	mkdir -p /home/$(USER)/.config/sway
-	touch /home/$(USER)/.config/sway/config
+	#mkdir -p /home/$(USER)/.config/sway
+	#touch /home/$(USER)/.config/sway/config
 	
 app:
 	pacman -S --noconfirm firefox alacritty tmux
