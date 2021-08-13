@@ -79,7 +79,7 @@ user: cfg
 	echo "$(USER):$(USER)" | chpasswd
 	ln -s /usr/bin/nvim /usr/bin/vi
 	ln -s /usr/bin/nvim /usr/bin/vim
-	EDITOR=vi visudo
+	echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 	mkdir -p /home/$(USER)/.config/fish/
 	echo '# Start X at login' > /home/$(USER)/.config/fish/config.fish
 	echo 'if status is-login' >> /home/$(USER)/.config/fish/config.fish
@@ -107,9 +107,13 @@ system: cfg
 	echo $(HOSTNAME) > /etc/hostname
 	mkinitcpio -P
 	echo "root:root" | chpasswd
-	$(PACMAN) openssh iwd
-	systemctl enable sshd
+	$(PACMAN) iwd openssh
 	systemctl enable iwd
+	systemctl enable sshd
+	mkdir -p /etc/iwd
+	echo "[General]" > /etc/iwd/main.conf
+	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
+	echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 
 fstab: cfg
 	mkdir -p /mnt/evo-pro
