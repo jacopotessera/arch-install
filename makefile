@@ -92,6 +92,8 @@ user: cfg
 	echo 'end' >> /home/$(USER)/.config/fish/config.fish
 	chown -R $(USER):$(USER) /home/$(USER)/
 	chown $(USER):$(USER) /home/$(USER)/.config/fish/config.fish
+	chown $(USER):$(USER) /home/$(USER)/.config/sway/config
+	chown $(USER):$(USER) /home/$(USER)/.config/sway/config.toml
 
 autologin: cfg
 	mkdir -p /etc/systemd/system/getty@tty1.service.d/
@@ -117,6 +119,7 @@ system: cfg
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
 	echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+	#sudo systemctl --user enable --now  pulseaudio.service
 
 fstab: cfg
 	mkdir -p /mnt/evo-pro
@@ -124,17 +127,15 @@ fstab: cfg
 	chown $(USER) /mnt/evo-pro
 
 libvirt: cfg
-	$(PACMAN) qemu libvirt firewalld virt-manager polkit edk2-ovmf dnsmasq
+	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf dnsmasq
 	usermod -a -G libvirt,kvm $(USER)
-	systemctl enable libvirtd firewalld
+	systemctl enable libvirtd
 	#virsh net-autostart default
-	#sudo virsh net-list --all
-	#sudo vi /etc/mkinitcpio.conf
-	#sudo vi /etc/modprobe.d/vfio.conf
-	#ls /dev/input/by-id/
-	#sudo vi /etc/libvirt/qemu.conf
-	#sudo pacman -S pulseaudio
-	#sudo systemctl --user enable --now  pulseaudio.service
+	#virsh net-start default
+	#sed -i 's/MODULES=()/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
+	#mkinitcpio -P
+	#echo "options vfio-pci ids=10de:1b06,10de:10ef" >> /etc/modprobe.d/vfio.conf
+	#sed -i 's/#user = "root"/user = "jacopo"/' /etc/libvirt/qemu.conf
 
 .ONESHELL:
 sway:
@@ -154,3 +155,4 @@ app:
 	popd
 	rm -rf yay
 	$(YAY) spotify
+
