@@ -7,6 +7,7 @@ CONFIGURATION_JUSTNAME := $(ARCH_INSTALL_CONFIGURATION)
 CONFIGURATION_COMPLETE := $(CURDIR)/$(CONFIGURATION_JUSTNAME)
 
 PACMAN := pacman -Sy --noconfirm
+YAY := yay -Sy --noconfirm
 
 DISK := $(ARCH_INSTALL_DISK)
 P := $(ARCH_INSTALL_P)
@@ -56,7 +57,9 @@ chroot:
 	cp configure.sh /mnt/configure.sh
 	mkdir -p /mnt/var/lib/iwd
 	cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
-	arch-chroot /mnt source /configure.sh && make -f /makefile cfg
+	mkdir -p /mnt/home/$(USER)/.config/sway
+	cp config/sway/* /mnt/home/$(USER)/.config/sway
+	arch-chroot /mnt make all
 
 all: cfg datetime locale user autologin grub system fstab libvirt sway app
 
@@ -107,7 +110,7 @@ system: cfg
 	echo $(HOSTNAME) > /etc/hostname
 	mkinitcpio -P
 	echo "root:root" | chpasswd
-	$(PACMAN) iwd openssh
+	$(PACMAN) iwd openssh pulseaudio pulsemixer
 	systemctl enable iwd
 	systemctl enable sshd
 	mkdir -p /etc/iwd
@@ -133,11 +136,21 @@ libvirt: cfg
 	#sudo pacman -S pulseaudio
 	#sudo systemctl --user enable --now  pulseaudio.service
 
-sway: cfg
-	pacman -S --noconfirm sway i3status-rust bemenu
-	#mkdir -p /home/$(USER)/.config/sway
-	#touch /home/$(USER)/.config/sway/config
+.ONESHELL:
+sway:
+	$(PACMAN) sway i3status-rust ttf-font-awesome fzf xorg-xwayland
+	git clone https://aur.archlinux.org/sway-launcher-desktop-git.git
+	pushd sway-launcher-desktop-git
+	makepkg -si
+	popd
+	rm -rf sway-launcher-desktop-git
 	
+.ONESHELL:
 app:
-	pacman -S --noconfirm firefox alacritty tmux
-
+	$(PACMAN) wget git firefox alacritty tmux thunar gvfs thunar-volman thunar-archive-plugin
+	git clone https://aur.archlinux.org/yay.git
+	pushd yay
+	makepkg -si
+	popd
+	rm -rf yay
+	$(YAY) spotify
