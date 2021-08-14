@@ -1,4 +1,4 @@
-.PHONY: check-cfg print-cfg cfg partition chroot datetime locale user grub system fstab libvirt sway app all
+.PHONY: check-cfg print-cfg cfg partition chroot datetime locale user grub system fstab libvirt sway app all vm
 
 MAKEFILE_JUSTNAME := $(firstword $(MAKEFILE_LIST))
 MAKEFILE_COMPLETE := $(CURDIR)/$(MAKEFILE_JUSTNAME)
@@ -62,6 +62,8 @@ chroot:
 	arch-chroot /mnt make all
 
 all: cfg datetime locale user autologin grub system fstab libvirt sway app
+
+vm: cfg datetime locale user autologin grub system sway app
 
 datetime:
 	ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
@@ -127,15 +129,17 @@ fstab: cfg
 	chown $(USER) /mnt/evo-pro
 
 libvirt: cfg
-	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf dnsmasq
+	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf iptables-nft dnsmasq
 	usermod -a -G libvirt,kvm $(USER)
+	systemctl enable iptables
+	systemctl enable dnsmasq
 	systemctl enable libvirtd
 	#virsh net-autostart default
 	#virsh net-start default
 	#sed -i 's/MODULES=()/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
 	#mkinitcpio -P
 	#echo "options vfio-pci ids=10de:1b06,10de:10ef" >> /etc/modprobe.d/vfio.conf
-	#sed -i 's/#user = "root"/user = "jacopo"/' /etc/libvirt/qemu.conf
+	#sed -i 's/#user = "root"/user = "$(USER)"/' /etc/libvirt/qemu.conf
 
 .ONESHELL:
 sway:
