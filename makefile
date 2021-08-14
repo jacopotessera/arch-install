@@ -6,14 +6,14 @@ MAKEFILE_COMPLETE := $(CURDIR)/$(MAKEFILE_JUSTNAME)
 CONFIGURATION_JUSTNAME := $(ARCH_INSTALL_CONFIGURATION)
 CONFIGURATION_COMPLETE := $(CURDIR)/$(CONFIGURATION_JUSTNAME)
 
-PACMAN := pacman -Sy --noconfirm
-YAY := yay -Sy --noconfirm
-
 DISK := $(ARCH_INSTALL_DISK)
 P := $(ARCH_INSTALL_P)
 
 HOSTNAME := $(ARCH_INSTALL_HOSTNAME)
 USER := $(ARCH_INSTALL_USER)
+
+PACMAN := pacman -Sy --noconfirm
+YAY := sudo -u $(USER) yay -Sy --noconfirm
 
 
 # CONFIGURATION
@@ -126,7 +126,7 @@ system: cfg
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
 	echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-	#sudo systemctl --user enable --now  pulseaudio.service
+	#systemctl --user enable --now  pulseaudio.service
 
 fstab: cfg
 	mkdir -p /mnt/evo-pro
@@ -144,14 +144,14 @@ libvirt: cfg
 	sed -i 's/MODULES=()/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
 	mkinitcpio -P
 	echo "options vfio-pci ids=10de:1b06,10de:10ef" >> /etc/modprobe.d/vfio.conf
-	sed -i 's/#user = "root"/user = "$(USER)"/' /etc/libvirt/qemu.conf
+	-sed -i 's/#user = "root"/user = "$(USER)"/' /etc/libvirt/qemu.conf
 
 .ONESHELL:
 yay: cfg
 	git clone https://aur.archlinux.org/yay.git
 	chown -R $(USER):$(USER) yay/
 	pushd yay
-	sudo -u $(USER) makepkg -si
+	sudo -u $(USER) makepkg -si --noconfirm
 	popd
 	rm -rf yay
 
