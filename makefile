@@ -1,4 +1,4 @@
-.PHONY: check-cfg print-cfg cfg partition chroot datetime locale user grub system fstab libvirt sway app all vm
+.PHONY: check-cfg print-cfg cfg partition chroot datetime locale user grub system fstab yay libvirt sway app all vm
 
 MAKEFILE_JUSTNAME := $(firstword $(MAKEFILE_LIST))
 MAKEFILE_COMPLETE := $(CURDIR)/$(MAKEFILE_JUSTNAME)
@@ -41,14 +41,15 @@ partition: cfg
 	parted /dev/$(DISK) mklabel gpt
 	parted /dev/$(DISK) mkpart fat32 1M 512M
 	parted /dev/$(DISK) mkpart ext4 512M 100%
-	
 	mkfs.fat -F 32 -n boot /dev/$(DISK)$(P)1
 	mkfs.ext4 /dev/$(DISK)$(P)2 
 
+mount:
 	mount /dev/$(DISK)$(P)2 /mnt
 	mkdir -p /mnt/boot
 	mount /dev/$(DISK)$(P)1 /mnt/boot
 
+pacstrap:
 	pacstrap /mnt base base-devel linux linux-firmware
 	genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -56,12 +57,16 @@ chroot:
 	cp makefile /mnt/makefile
 	cp configure.sh /mnt/configure.sh
 	mkdir -p /mnt/var/lib/iwd
-	cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
+	-cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
 	mkdir -p /mnt/home/$(USER)/.config/sway
-	cp config/sway/* /mnt/home/$(USER)/.config/sway
+	-cp config/sway/* /mnt/home/$(USER)/.config/sway
 	arch-chroot /mnt make all
 
-all: cfg datetime locale user autologin grub system fstab libvirt sway app
+step1: partition mount pacstrap chroot
+
+step2: all
+
+all: cfg datetime locale user autologin grub system fstab yay libvirt sway app
 
 vm: cfg datetime locale user autologin grub system sway app
 
@@ -136,27 +141,28 @@ libvirt: cfg
 	systemctl enable libvirtd
 	#virsh net-autostart default
 	#virsh net-start default
-	#sed -i 's/MODULES=()/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
-	#mkinitcpio -P
-	#echo "options vfio-pci ids=10de:1b06,10de:10ef" >> /etc/modprobe.d/vfio.conf
-	#sed -i 's/#user = "root"/user = "$(USER)"/' /etc/libvirt/qemu.conf
+	sed -i 's/MODULES=()/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
+	mkinitcpio -P
+	echo "options vfio-pci ids=10de:1b06,10de:10ef" >> /etc/modprobe.d/vfio.conf
+	sed -i 's/#user = "root"/user = "$(USER)"/' /etc/libvirt/qemu.conf
+
+.ONESHELL:
+yay: cfg
+	git clone https://aur.archlinux.org/yay.git
+	chown -R $(USER):$(USER) yay/
+	pushd yay
+	sudo -u $(USER) makepkg -si
+	popd
+	rm -rf yay
+
 
 .ONESHELL:
 sway:
 	$(PACMAN) sway i3status-rust ttf-font-awesome fzf xorg-xwayland
-	git clone https://aur.archlinux.org/sway-launcher-desktop-git.git
-	pushd sway-launcher-desktop-git
-	makepkg -si
-	popd
-	rm -rf sway-launcher-desktop-git
-	
+	$(YAY) sway-launcher-desktop-git
+
 .ONESHELL:
 app:
 	$(PACMAN) wget git firefox alacritty tmux thunar gvfs thunar-volman thunar-archive-plugin
-	git clone https://aur.archlinux.org/yay.git
-	pushd yay
-	makepkg -si
-	popd
-	rm -rf yay
 	$(YAY) spotify
 
