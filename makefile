@@ -119,7 +119,7 @@ system: cfg
 	echo $(HOSTNAME) > /etc/hostname
 	mkinitcpio -P
 	echo "root:root" | chpasswd
-	$(PACMAN) iwd openssh pulseaudio pulsemixer
+	$(PACMAN) dhcpcd iwd openssh pulseaudio pulsemixer
 	systemctl enable iwd
 	systemctl enable sshd
 	mkdir -p /etc/iwd
