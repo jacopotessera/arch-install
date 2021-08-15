@@ -94,6 +94,7 @@ user: cfg
 	echo '# Start X at login' > /home/$(USER)/.config/fish/config.fish
 	echo 'if status is-login' >> /home/$(USER)/.config/fish/config.fish
 	echo '  if test -z "$$DISPLAY" -a "$$XDG_VTNR" = 1' >> /home/$(USER)/.config/fish/config.fish
+	#echo 'LIBSEAT_BACKEND=logind WLR_RENDERER_ALLOW_SOFTWARE=1 sway' >> /home/$(USER)/.config/fish/config.fish
 	echo '    sway' >> /home/$(USER)/.config/fish/config.fish
 	echo '  end' >> /home/$(USER)/.config/fish/config.fish
 	echo 'end' >> /home/$(USER)/.config/fish/config.fish
@@ -122,6 +123,7 @@ system: cfg
 	$(PACMAN) dhcpcd iwd openssh pulseaudio pulsemixer
 	systemctl enable iwd
 	systemctl enable sshd
+	#systemctl enable dhcpcd
 	mkdir -p /etc/iwd
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
