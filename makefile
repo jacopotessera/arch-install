@@ -123,7 +123,7 @@ system: cfg
 	echo $(HOSTNAME) > /etc/hostname
 	mkinitcpio -P
 	echo "root:root" | chpasswd
-	$(PACMAN) dhcpcd iwd openssh pulseaudio pulsemixer
+	$(PACMAN) dhcpcd iwd openssh pulseaudio pulsemixer git
 	systemctl enable iwd
 	systemctl enable sshd
 	#systemctl enable dhcpcd
