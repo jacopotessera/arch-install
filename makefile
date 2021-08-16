@@ -131,6 +131,7 @@ system: cfg
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
 	echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+	$(PACMAN) systemd-resolvconf
 	systemctl enable systemd-resolved
 	#systemctl --user enable --now  pulseaudio.service
 
