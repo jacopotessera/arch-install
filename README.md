@@ -1,1 +1,1 @@
-# ARCH INSTALL
+# arch-install

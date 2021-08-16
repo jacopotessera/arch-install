@@ -15,7 +15,6 @@ USER := $(ARCH_INSTALL_USER)
 PACMAN := pacman -Sy --noconfirm
 YAY := sudo -u $(USER) yay -Sy --noconfirm
 
-
 # CONFIGURATION
 
 check-cfg:
@@ -60,6 +59,8 @@ chroot:
 	-cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
 	mkdir -p /mnt/home/$(USER)/.config/sway
 	-cp config/sway/* /mnt/home/$(USER)/.config/sway
+	mkdir -p /mnt/home/$(USER)/.ssh/
+	-cp .ssh/* /mnt/home/$(USER)/.ssh
 	arch-chroot /mnt make all
 
 step1: partition mount pacstrap chroot
@@ -99,6 +100,8 @@ user: cfg
 	echo '  end' >> /home/$(USER)/.config/fish/config.fish
 	echo 'end' >> /home/$(USER)/.config/fish/config.fish
 	chown -R $(USER):$(USER) /home/$(USER)/
+	chmod 400 /mnt/home/$(USER)/.ssh
+	chown $(USER):$(USER) /home/$(USER)/.ssh
 	chown $(USER):$(USER) /home/$(USER)/.config/fish/config.fish
 	chown $(USER):$(USER) /home/$(USER)/.config/sway/config
 	chown $(USER):$(USER) /home/$(USER)/.config/sway/config.toml
@@ -128,6 +131,7 @@ system: cfg
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
 	echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+	systemctl enable systemd-resolved
 	#systemctl --user enable --now  pulseaudio.service
 
 fstab: cfg
