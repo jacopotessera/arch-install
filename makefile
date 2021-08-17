@@ -131,8 +131,8 @@ system: cfg
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
 	echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-	$(PACMAN) systemd-resolvconf
-	systemctl enable systemd-resolved
+	#$(PACMAN) systemd-resolvconf
+	#systemctl enable systemd-resolved
 	#systemctl --user enable --now  pulseaudio.service
 
 fstab: cfg
@@ -142,7 +142,7 @@ fstab: cfg
 
 libvirt: cfg
 	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf dnsmasq
-	-$(PACMAN) iptables-nft
+	pacman -S iptables-nft
 	usermod -a -G libvirt,kvm $(USER)
 	systemctl enable iptables
 	systemctl enable dnsmasq
