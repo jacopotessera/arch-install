@@ -54,13 +54,13 @@ pacstrap:
 
 chroot:
 	cp makefile /mnt/makefile
-	cp configure.sh /mnt/configure.sh
+	cp $(CONFIGURATION_COMPLETE) /mnt/configure.sh
 	mkdir -p /mnt/var/lib/iwd
 	-cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
 	mkdir -p /mnt/home/$(USER)/.config/sway
 	-cp config/sway/* /mnt/home/$(USER)/.config/sway
 	mkdir -p /mnt/home/$(USER)/.ssh/
-	-cp .ssh/* /mnt/home/$(USER)/.ssh
+	-cp ~/.ssh/* /mnt/home/$(USER)/.ssh
 	arch-chroot /mnt make all
 
 step1: partition mount pacstrap chroot
@@ -141,7 +141,8 @@ fstab: cfg
 	chown $(USER) /mnt/evo-pro
 
 libvirt: cfg
-	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf iptables-nft dnsmasq
+	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf dnsmasq
+	-$(PACMAN) iptables-nft
 	usermod -a -G libvirt,kvm $(USER)
 	systemctl enable iptables
 	systemctl enable dnsmasq
