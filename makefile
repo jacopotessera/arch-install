@@ -1,5 +1,8 @@
 .PHONY: check-cfg print-cfg cfg partition chroot datetime locale user grub system fstab yay libvirt sway app all vm
 
+ARCH_INSTALL := arch-install
+VERSION := 0.1
+
 MAKEFILE_JUSTNAME := $(firstword $(MAKEFILE_LIST))
 MAKEFILE_COMPLETE := $(CURDIR)/$(MAKEFILE_JUSTNAME)
 
@@ -14,8 +17,6 @@ USER := $(ARCH_INSTALL_USER)
 
 PACMAN := pacman -Sy --noconfirm
 YAY := sudo -u $(USER) yay -Sy --noconfirm
-
-# CONFIGURATION
 
 check-cfg:
 ifeq ($(CONFIGURATION_JUSTNAME),)
@@ -33,8 +34,6 @@ print-cfg:
 	@echo -e '\tUSER: $(USER)'
 
 cfg: check-cfg print-cfg
-
-# END CONFIGURATION
 
 partition: cfg
 	parted /dev/$(DISK) mklabel gpt
@@ -55,21 +54,26 @@ pacstrap:
 chroot:
 	cp makefile /mnt/makefile
 	cp $(CONFIGURATION_COMPLETE) /mnt/configure.sh
+	cp -r ~/$(ARCH_INSTALL) /mnt/
 	mkdir -p /mnt/var/lib/iwd
 	-cp /var/lib/iwd/*.psk /mnt/var/lib/iwd/
 	mkdir -p /mnt/home/$(USER)/.config/sway
 	-cp config/sway/* /mnt/home/$(USER)/.config/sway
 	mkdir -p /mnt/home/$(USER)/.ssh/
 	-cp ~/.ssh/* /mnt/home/$(USER)/.ssh
-	arch-chroot /mnt make all
+	mkdir -p /mnt/etc
+	cp etc/* /mnt/etc/
+	mkdir -p /mnt/home/$(USER)/.config/fish
+    cp config/fish/* /mnt/home/$(USER)/.config/fish
+	arch-chroot /mnt #make all
 
 step1: partition mount pacstrap chroot
 
 step2: all
 
-all: cfg datetime locale user autologin grub system fstab yay libvirt sway app
+all: cfg datetime locale user autologin grub system fstab yay libvirt sway app spotify
 
-vm: cfg datetime locale user autologin grub system sway app
+vm: cfg datetime locale user autologin grub system system_vm yay sway app
 
 datetime:
 	ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
@@ -80,8 +84,6 @@ datetime:
 locale:
 	sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 	locale-gen
-	echo "LANG=en_US.UTF-8" > /etc/locale.conf
-	echo "KEYMAP=us_intl" > /etc/vconsole.conf
 
 user: cfg
 	$(PACMAN) sudo neovim fish
@@ -91,14 +93,6 @@ user: cfg
 	ln -s /usr/bin/nvim /usr/bin/vi
 	ln -s /usr/bin/nvim /usr/bin/vim
 	echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-	mkdir -p /home/$(USER)/.config/fish/
-	echo '# Start X at login' > /home/$(USER)/.config/fish/config.fish
-	echo 'if status is-login' >> /home/$(USER)/.config/fish/config.fish
-	echo '  if test -z "$$DISPLAY" -a "$$XDG_VTNR" = 1' >> /home/$(USER)/.config/fish/config.fish
-	#echo 'LIBSEAT_BACKEND=logind WLR_RENDERER_ALLOW_SOFTWARE=1 sway' >> /home/$(USER)/.config/fish/config.fish
-	echo '    sway' >> /home/$(USER)/.config/fish/config.fish
-	echo '  end' >> /home/$(USER)/.config/fish/config.fish
-	echo 'end' >> /home/$(USER)/.config/fish/config.fish
 	chown -R $(USER):$(USER) /home/$(USER)/
 	chmod 400 /mnt/home/$(USER)/.ssh
 	chown $(USER):$(USER) /home/$(USER)/.ssh
@@ -126,7 +120,7 @@ system: cfg
 	$(PACMAN) dhcpcd iwd openssh pulseaudio pulsemixer git
 	systemctl enable iwd
 	systemctl enable sshd
-	#systemctl enable dhcpcd
+	
 	mkdir -p /etc/iwd
 	echo "[General]" > /etc/iwd/main.conf
 	echo "EnableNetworkConfiguration=true" >> /etc/iwd/main.conf
@@ -135,6 +129,10 @@ system: cfg
 	#systemctl enable systemd-resolved
 	#systemctl --user enable --now  pulseaudio.service
 
+system_vm:
+	$(PACMAN) dhcpcd dhcp
+	systemctl enable dhcpcd
+	
 fstab: cfg
 	mkdir -p /mnt/evo-pro
 	echo "/dev/nvme0n1p1 /mnt/evo-pro ext4 rw,relatime 0 0" >> /etc/fstab
@@ -163,14 +161,15 @@ yay: cfg
 	popd
 	rm -rf yay
 
-
 .ONESHELL:
-sway:
+sway: cfg
 	$(PACMAN) sway i3status-rust ttf-font-awesome fzf xorg-xwayland
 	$(YAY) sway-launcher-desktop-git
 
-.ONESHELL:
-app:
+app: cfg
 	$(PACMAN) wget git firefox alacritty tmux thunar gvfs thunar-volman thunar-archive-plugin
+
+.ONESHELL: cfg
+spotify:
 	$(YAY) spotify
 
