@@ -42,10 +42,19 @@ partition: cfg
 	mkfs.fat -F 32 -n boot /dev/$(DISK)$(P)1
 	mkfs.ext4 /dev/$(DISK)$(P)2 
 
+partition-bios: cfg
+	parted /dev/$(DISK) mklabel msdos
+	parted /dev/$(DISK) mktable msdos
+	parted /dev/$(DISK) mkpart ext4 1M 100%
+	mkfs.ext4 /dev/$(DISK)$(P)1
+
 mount:
 	mount /dev/$(DISK)$(P)2 /mnt
 	mkdir -p /mnt/boot
 	mount /dev/$(DISK)$(P)1 /mnt/boot
+
+mount-bios:
+	mount /dev/$(DISK)$(P)1 /mnt
 
 pacstrap:
 	pacstrap /mnt base base-devel linux linux-firmware
@@ -64,16 +73,18 @@ chroot:
 	mkdir -p /mnt/etc
 	cp etc/* /mnt/etc/
 	mkdir -p /mnt/home/$(USER)/.config/fish
-    cp config/fish/* /mnt/home/$(USER)/.config/fish
-	arch-chroot /mnt #make all
+	cp config/fish/* /mnt/home/$(USER)/.config/fish
+	arch-chroot /mnt
 
-step1: partition mount pacstrap chroot
+prepare: partition mount pacstrap chroot
 
-step2: all
+prepare-bios: partition-bios mount-bios pacstrap chroot
 
 all: cfg datetime locale user autologin grub system fstab yay libvirt sway app spotify
 
 vm: cfg datetime locale user autologin grub system system_vm yay sway app
+
+vault: cfg datetime locale user grub-bios system system_vm
 
 datetime:
 	ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
@@ -94,7 +105,7 @@ user: cfg
 	ln -s /usr/bin/nvim /usr/bin/vim
 	echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 	chown -R $(USER):$(USER) /home/$(USER)/
-	chmod 400 /mnt/home/$(USER)/.ssh
+	chmod 400 /home/$(USER)/.ssh
 	chown $(USER):$(USER) /home/$(USER)/.ssh
 	chown $(USER):$(USER) /home/$(USER)/.config/fish/config.fish
 	chown $(USER):$(USER) /home/$(USER)/.config/sway/config
@@ -110,6 +121,12 @@ autologin: cfg
 grub:
 	$(PACMAN) grub efibootmgr
 	grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grub
+	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub
+	grub-mkconfig -o /boot/grub/grub.cfg
+
+grub-bios:
+	$(PACMAN) grub
+	grub-install --target=i386-pc /dev/$(DISK)$(P)1
 	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub
 	grub-mkconfig -o /boot/grub/grub.cfg
 
