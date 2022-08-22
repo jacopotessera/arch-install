@@ -186,7 +186,7 @@ yay: cfg
 
 .ONESHELL:
 sway: cfg
-	$(PACMAN) sway i3status-rust ttf-font-awesome fzf xorg-xwayland
+	$(PACMAN) sway i3status-rust ttf-font-awesome fzf xorg-xwayland swaybg
 	$(YAY) sway-launcher-desktop-git
 
 .ONESHELL:

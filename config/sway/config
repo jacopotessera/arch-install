@@ -25,6 +25,8 @@ input * xkb_layout "us_intl"
 ### Output configuration
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
+output HDMI-A-1 resolution 1920x1080 position 1920,0
+output DP-1 resolution 1920x1080 position 0,0
 output * bg #000000 solid_color
 #
 # Example configuration:
