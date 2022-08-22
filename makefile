@@ -80,11 +80,13 @@ prepare: partition mount pacstrap chroot
 
 prepare-bios: partition-bios mount-bios pacstrap chroot
 
-all: cfg datetime locale user autologin grub system fstab yay libvirt sway app spotify
+all: cfg datetime locale user autologin grub system audio fstab yay libvirt sway app spotify
 
-vm: cfg datetime locale user autologin grub system system_vm yay sway app
+vm: cfg datetime locale user autologin grub system audio system_vm yay i3 app idea
 
 vault: cfg datetime locale user grub-bios system system_vm
+
+headless: cfg datetime locale user grub system system_vm
 
 datetime:
 	ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
@@ -105,11 +107,12 @@ user: cfg
 	ln -s /usr/bin/nvim /usr/bin/vim
 	echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 	chown -R $(USER):$(USER) /home/$(USER)/
-	chmod 400 /home/$(USER)/.ssh
+	chmod 500 /home/$(USER)/.ssh
 	chown $(USER):$(USER) /home/$(USER)/.ssh
 	chown $(USER):$(USER) /home/$(USER)/.config/fish/config.fish
 	chown $(USER):$(USER) /home/$(USER)/.config/sway/config
 	chown $(USER):$(USER) /home/$(USER)/.config/sway/config.toml
+	chmod +x /home/$(USER)/.config/fish/jetbrains-fish.sh
 
 autologin: cfg
 	mkdir -p /etc/systemd/system/getty@tty1.service.d/
@@ -134,7 +137,7 @@ system: cfg
 	echo $(HOSTNAME) > /etc/hostname
 	mkinitcpio -P
 	echo "root:root" | chpasswd
-	$(PACMAN) dhcpcd iwd openssh pulseaudio pulsemixer git
+	$(PACMAN) dhcpcd iwd openssh git
 	systemctl enable iwd
 	systemctl enable sshd
 	
@@ -149,7 +152,10 @@ system: cfg
 system_vm:
 	$(PACMAN) dhcpcd dhcp
 	systemctl enable dhcpcd
-	
+
+audio:
+	$(PACMAN) pulseaudio pulsemixer
+
 fstab: cfg
 	mkdir -p /mnt/evo-pro
 	echo "/dev/nvme0n1p1 /mnt/evo-pro ext4 rw,relatime 0 0" >> /etc/fstab
@@ -183,8 +189,26 @@ sway: cfg
 	$(PACMAN) sway i3status-rust ttf-font-awesome fzf xorg-xwayland
 	$(YAY) sway-launcher-desktop-git
 
+.ONESHELL:
+i3: cfg
+	$(YAY) xf86-video-qxl xorg xorg-server xorg-xinit i3 dmenu spice-vdagent xrandr autorandr
+	echo "spice-vdagent &" > /home/$(USER)/.xinitrc
+	echo "" >> /home/$(USER)/.xinitrc
+	echo "exec i3" >> /home/$(USER)/.xinitrc
+	sudo systemctl enable autorandr.service
+	#xrandr --auto --output Virtual-1 --mode 1916x989
+	#autorandr --save default
+	cp /home/$(USER)/.config/.xinitrc /home/$(USER)
+	chmod +x /home/$(USER)/.xinitrc
+	cp /home/$(USER)/.config/fish/config.fish.x /home/$(USER)/.config/fish/config.fish
+	chown $(USER):$(USER) /home/$(USER)/.config/fish/config.fish
+
 app: cfg
-	$(PACMAN) wget git firefox alacritty tmux thunar gvfs thunar-volman thunar-archive-plugin
+	$(PACMAN) wget git firefox alacritty tmux thunar gvfs thunar-volman thunar-archive-plugin python ansible
+
+idea: cfg
+	$(YAY) intellij-idea-ultimate-edition intellij-idea-ultimate-edition-jre
+	sudo ln -s /usr/bin/intellij-idea-ultimate-edition /usr/bin/idea
 
 .ONESHELL: cfg
 spotify:
