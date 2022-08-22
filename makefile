@@ -162,7 +162,7 @@ fstab: cfg
 	chown $(USER) /mnt/evo-pro
 
 libvirt: cfg
-	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf dnsmasq
+	$(PACMAN) qemu libvirt virt-manager polkit edk2-ovmf dnsmasq virt-viewer
 	pacman -S iptables-nft
 	usermod -a -G libvirt,kvm $(USER)
 	systemctl enable iptables
