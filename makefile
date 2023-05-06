@@ -191,7 +191,7 @@ sway: cfg
 
 .ONESHELL:
 i3: cfg
-	$(YAY) xf86-video-qxl xorg xorg-server xorg-xinit i3 dmenu spice-vdagent xrandr autorandr
+	$(YAY) xf86-video-qxl xorg xorg-server xorg-xinit i3 i3status dmenu spice-vdagent xrandr autorandr
 	echo "spice-vdagent &" > /home/$(USER)/.xinitrc
 	echo "" >> /home/$(USER)/.xinitrc
 	echo "exec i3" >> /home/$(USER)/.xinitrc
@@ -205,6 +205,7 @@ i3: cfg
 
 app: cfg
 	$(PACMAN) wget git firefox alacritty tmux thunar gvfs thunar-volman thunar-archive-plugin python ansible
+	echo "gtk-application-prefer-dark-theme=1" | sudo tee -a /usr/share/gtk-3.0/settings.ini
 
 idea: cfg
 	$(YAY) intellij-idea-ultimate-edition intellij-idea-ultimate-edition-jre
